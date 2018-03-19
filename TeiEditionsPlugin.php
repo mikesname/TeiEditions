@@ -313,6 +313,7 @@ SQL
     {
         queue_css_file('css/teibp', $media = "all", $conditional = false, $dir = 'teibp');
         queue_css_file('css/custom', $media = "all", $conditional = false, $dir = 'teibp');
+        queue_css_file('rendition', $media = "all", $conditional = false, $dir = 'css');
         queue_js_file('js/teibp', $dir = 'teibp');
     }
 
