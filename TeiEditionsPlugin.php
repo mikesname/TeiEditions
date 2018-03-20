@@ -311,10 +311,7 @@ SQL
 
     public function hookPublicHead($args)
     {
-        queue_css_file('css/teibp', $media = "all", $conditional = false, $dir = 'teibp');
-        queue_css_file('css/custom', $media = "all", $conditional = false, $dir = 'teibp');
-        queue_css_file('rendition', $media = "all", $conditional = false, $dir = 'css');
-        queue_js_file('js/teibp', $dir = 'teibp');
+        queue_css_file('styles', $media = "all", $conditional = false, $dir = 'css');
     }
 
     /**
