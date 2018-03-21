@@ -1,5 +1,8 @@
 
 .tei-entity {
     border-bottom: 1px dotted lightgrey;
+}
 
+.tei-entity-data {
+    display: none;
 }
