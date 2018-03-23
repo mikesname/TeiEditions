@@ -312,6 +312,7 @@ SQL
     public function hookPublicHead($args)
     {
         queue_css_file('styles', $media = "all", $conditional = false, $dir = 'css');
+        queue_js_file("jquery.hoverIntent.min", $dir = "js");
         queue_js_file("editions", $dir = "js");
     }
 

@@ -6,3 +6,7 @@
 .tei-entity-data {
     display: none;
 }
+
+.tei-entity-data h5 {
+    margin: 5px 0;
+}
