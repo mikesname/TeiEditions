@@ -207,13 +207,13 @@ SQL
                     "Persons" => [
                         "description" => "Persons mentioned in the text.",
                         "xpaths" => [
-                            "/tei:TEI/tei:teiHeader/tei:sourceDesc/tei:listPerson/tei:person/tei:persName"
+                            "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:listPerson/tei:person/tei:persName"
                         ]
                     ],
                     "Organisations" => [
                         "description" => "Organisations mentioned in the text.",
                         "xpaths" => [
-                            "/tei:TEI/tei:teiHeader/tei:sourceDesc/tei:listOrg/tei:org/tei:orgName"
+                            "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:listOrg/tei:org/tei:orgName"
                         ]
                     ]
                 ]

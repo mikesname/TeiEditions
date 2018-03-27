@@ -12,18 +12,20 @@ jQuery(function($) {
       });
 
   var $itemTexts = $("#item-texts");
-  var $all = $(".tei-entity-data");
+  var $all = $(".tei-entity");
 
-  $(".tei-entity").hoverIntent(function() {
+  $(".tei-entity-ref").hoverIntent(function() {
     var url = $(this).data("ref");
-    var $entities = $(".tei-entity-data[data-ref='" + url + "']");
+    var $entities = $(".content-info-entity[data-ref='" + url + "']");
     $all.hide();
     if ($entities.length > 0) {
       $entities.css({
         position: "fixed",
-        left: $itemTexts.offset().left + $itemTexts.width(),
-        top: $entities.offset().top
+        left: $itemTexts.offset().left + $itemTexts.width() + 50,
+        top: 100,//$entities.offset().top
       }).show();
+    } else {
+        console.log("No info for", url);
     }
   });
 });

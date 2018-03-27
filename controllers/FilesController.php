@@ -290,6 +290,22 @@ class TeiEditions_FilesController extends Omeka_Controller_AbstractActionControl
         }
         @insert_files_for_item($item, "Filesystem",
             ['source' => $path, 'name' => $name]);
+
+        // Ensure files are sorted img first...
+        $others = [];
+        $xml = [];
+        foreach ($item->getFiles() as $file) {
+            if (!tei_editions_is_xml_file($file)) {
+                $others[] = $file;
+            } else {
+                $xml[] = $file;
+            }
+        }
+        $order = 1;
+        foreach (array_merge($others, $xml) as $file) {
+            $file->order = $order++;
+            $file->save();
+        }
     }
 
     /**

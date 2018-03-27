@@ -70,9 +70,12 @@ function tei_editions_render_item_text($item)
     // FIXME: testing...
     //$html["Language2"] = "This is a test";
 
+    $ident = metadata($item, ['Dublin Core', "Identifier"], ['no_escape' => true]);
+    $desc = metadata($item, ['Dublin Core', "Description"], ['no_escape' => true]);
+    $src = metadata($item, ['Dublin Core', "Source"], ['no_escape' => true]);
     $meta = [];
-    foreach (["Date", "Publisher", "Format", "Language"] as $key) {
-        $value = metadata($item, ['Dublin Core', $key]);
+    foreach (["Date", "Creator", "Language"] as $key) {
+        $value = metadata($item, ['Dublin Core', $key], ['no_escape' => true]);
         if ($value) {
             $meta[$key] = $value;
         }
@@ -80,7 +83,8 @@ function tei_editions_render_item_text($item)
 
     return ViewRenderer::render("texts.html.twig", [
             "item" => $item, "data" => $html, "metadata" => $meta,
-            "exhibit" => $exhibit
+            "exhibit" => $exhibit, "identifier" => $ident,
+            "description" => $desc, "source" => $src
         ]
     );
 }
