@@ -11,7 +11,7 @@ jQuery(function($) {
         }
       });
 
-  var $itemTexts = $("#item-texts");
+  var $after = $("#content-files");
   var $all = $(".tei-entity");
 
   $(".tei-entity-ref").hoverIntent(function() {
@@ -19,11 +19,12 @@ jQuery(function($) {
     var $entities = $(".content-info-entity[data-ref='" + url + "']");
     $all.hide();
     if ($entities.length > 0) {
-      $entities.css({
-        position: "fixed",
-        left: $itemTexts.offset().left + $itemTexts.width() + 50,
-        top: 100,//$entities.offset().top
-      }).show();
+      $entities.show().position({
+          my:        "left top",
+          at:        "left bottom+20",
+          of:        $after,
+          collision: "fit"
+      });
     } else {
         console.log("No info for", url);
     }

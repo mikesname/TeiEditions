@@ -10,6 +10,7 @@
 }
 
 .tei > .tei-entities > .tei-entity {
+    float: left;
     display: none;
 }
 

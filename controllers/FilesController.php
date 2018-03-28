@@ -36,6 +36,10 @@ class TeiEditions_FilesController extends Omeka_Controller_AbstractActionControl
         $form = $this->_getImportForm();
         $this->view->form = $form;
         $this->_processImportForm($form);
+        // Clear and reindex.
+        Zend_Registry::get('job_dispatcher')->sendLongRunning(
+            'SolrSearch_Job_Reindex'
+        );
     }
 
     /**
@@ -49,6 +53,9 @@ class TeiEditions_FilesController extends Omeka_Controller_AbstractActionControl
         $form = $this->_getUpdateForm();
         $this->view->form = $form;
         $this->_processUpdateForm($form);
+        Zend_Registry::get('job_dispatcher')->sendLongRunning(
+            'SolrSearch_Job_Reindex'
+        );
     }
 
     /**
