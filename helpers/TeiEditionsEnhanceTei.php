@@ -141,7 +141,9 @@ function tei_editions_parse_geonames_rdf_place_name(SimpleXMLElement $xml, $lang
 
 function tei_editions_get_place($url, $lang = null)
 {
-    if (!preg_match("/(geonames)/", $url)) {
+    if (preg_match("/(keywords)/", $url)) {
+        return tei_editions_get_concept($url, $lang);
+    } else if (!preg_match("/(geonames)/", $url)) {
         return false;
     }
 
@@ -338,6 +340,12 @@ function tei_editions_add_term(SimpleXMLElement $list, $name, $url, $data)
 
     $item = $list->addChild('item');
     $item->addChild('name', trim($name));
+
+    // longitude and latitude
+    if (isset($data["longitude"]) and isset($data["latitude"])) {
+        $location = $item->addChild('location');
+        $location->addChild('geo', $data["latitude"] . " " . $data["longitude"]);
+    }
 
     if ($url) {
         tei_editions_add_link_group($item, $url);

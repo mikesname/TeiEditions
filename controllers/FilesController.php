@@ -531,13 +531,14 @@ class TeiEditions_FilesController extends Omeka_Controller_AbstractActionControl
      */
     private function _updateNeatlineExhibit(Item $item, TeiEditionsDocumentProxy $doc)
     {
-        $teiPlaces = array_filter(array_unique($doc->places(), SORT_REGULAR), function ($p) {
-            return isset($p["longitude"]) and isset($p["latitude"]);
-        });
+        $filter = function ($p) { return isset($p["longitude"]) and isset($p["latitude"]); };
+        $teiPlaces = array_filter(array_unique($doc->places(), SORT_REGULAR), $filter);
+        $teiGeoItems = array_filter(array_unique($doc->geoItems(), SORT_REGULAR), $filter);
 
         // if there are no mapped places, delete existing exhibits and return
         // early.
-        if (empty($teiPlaces)) {
+        if (empty($teiPlaces) and empty($teiGeoItems)) {
+            error_log("No Places for " . $doc->recordId());
             $exhibits = get_db()->getTable('NeatlineExhibit')
                 ->findBy(['slug' => strtolower($doc->recordId())]);
             foreach ($exhibits as $exhibit) {
@@ -581,23 +582,25 @@ class TeiEditions_FilesController extends Omeka_Controller_AbstractActionControl
 
         $points_deg = [];
         $points_metres = [];
+
         foreach ($teiPlaces as $teiPlace) {
-            $place = new NeatlineRecord;
-            $place->exhibit_id = $exhibit->id;
-            $place->title = $teiPlace["name"];
-            $deg = [$teiPlace["longitude"], $teiPlace["latitude"]];
-            $metres = tei_editions_degrees_to_metres($deg);
-            $points_deg[] = $deg;
-            $points_metres[] = $metres;
-            $place->coverage = "Point(" . implode(" ", $metres) . ")";
-            foreach ($teiPlace["urls"] as $url) {
-                $slug = tei_editions_url_to_slug($url);
-                if ($slug) {
-                    $place->slug = $slug;
-                    break;
+            $this->createPlaceRecord($exhibit, $teiPlace, "location",
+                $points_deg, $points_metres);
+        }
+
+        foreach ($teiGeoItems as $teiGeoItem) {
+            $tags = "";
+            if (isset($teiGeoItem["urls"])) {
+                foreach ($teiGeoItem["urls"] as $url) {
+                    if (stripos($url, "ehri_camps")) {
+                        $tags = "camp";
+                    } else if (stripos($url, "ehri_ghettos")) {
+                        $tags = "ghetto";
+                    }
                 }
+                $this->createPlaceRecord($exhibit, $teiGeoItem, $tags,
+                    $points_deg, $points_metres);
             }
-            $place->save();
         }
 
         if (!empty($points_metres)) {
@@ -629,5 +632,32 @@ class TeiEditions_FilesController extends Omeka_Controller_AbstractActionControl
             $file->order = $order++;
             $file->save();
         }
+    }
+
+    /**
+     * @param $exhibit
+     * @param $teiPlace
+     * @param $points_deg
+     * @param $points_metres
+     */
+    private function createPlaceRecord($exhibit, $teiPlace, $tags, &$points_deg, &$points_metres)
+    {
+        $place = new NeatlineRecord;
+        $place->tags = "location";
+        $place->exhibit_id = $exhibit->id;
+        $place->title = $teiPlace["name"];
+        $deg = [$teiPlace["longitude"], $teiPlace["latitude"]];
+        $metres = tei_editions_degrees_to_metres($deg);
+        $points_deg[] = $deg;
+        $points_metres[] = $metres;
+        $place->coverage = "Point(" . implode(" ", $metres) . ")";
+        foreach ($teiPlace["urls"] as $url) {
+            $slug = tei_editions_url_to_slug($url);
+            if ($slug) {
+                $place->slug = $slug;
+                break;
+            }
+        }
+        $place->save();
     }
 }

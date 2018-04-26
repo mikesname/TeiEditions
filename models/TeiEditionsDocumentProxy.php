@@ -130,17 +130,32 @@ class TeiEditionsDocumentProxy
      */
     public function places()
     {
-        $out = [];
-        $placesXpath = "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:listPlace/tei:place";
-        $places = $this->query->query($placesXpath);
-        foreach ($places as $place) {
-            $names = $this->query->evaluate("./tei:placeName[1]", $place);
-            if ($names->length === 0) continue;
+        return $this->placesWithGeo("listPlace", "place", "placeName");
+    }
 
-            $lat_long = $this->query->evaluate("./tei:location/tei:geo[1]", $place);
+    /**
+     * Find instances of tei:item elements which contain name
+     * and geo and return them as an array.
+     *
+     * @return array
+     */
+    public function geoItems()
+    {
+        return $this->placesWithGeo("list", "item", "name");
+    }
+
+    private function placesWithGeo($listTag, $itemTag, $nameTag)
+    {
+        $out = [];
+        $itemsXpath = "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:$listTag/tei:$itemTag";
+        $items = $this->query->query($itemsXpath);
+        foreach ($items as $item) {
+            $names = $this->query->evaluate("./tei:{$nameTag}[1]", $item);
+            if ($names->length === 0) continue;
+            $lat_long = $this->query->evaluate("./tei:location/tei:geo[1]", $item);
             if ($lat_long->length === 0) continue;
 
-            $links = $this->query->evaluate("./tei:linkGrp/tei:link[1]/@target", $place);
+            $links = $this->query->evaluate("./tei:linkGrp/tei:link[1]/@target", $item);
             $urls = [];
             foreach ($links as $link) {
                 $urls[] = $link->value;
@@ -156,6 +171,7 @@ class TeiEditionsDocumentProxy
                 "urls" => $urls
             );
         }
+
         return array_values($out);
     }
 
