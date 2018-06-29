@@ -73,6 +73,18 @@ class TeiEditionsEnhanceTeiTest extends PHPUnit_Framework_Testcase
         );
     }
 
+    public function test_addRefsIsIdempotent()
+    {
+        $src = new TeiEditionsDataFetcher([], "eng");
+        $e = new TeiEditionsTeiEnhancer($this->tei, $src);
+        $added1 = $e->addRefs();
+        $before = $this->tei->asXml();
+        $added2 = $e->addRefs();
+        $this->assertEquals($added1, $added2);
+        $this->assertEquals($before, $this->tei->asXml());
+
+    }
+
     public function test_addRefsWithLang()
     {
         // TODO: fix this so we can mock the data lookups!

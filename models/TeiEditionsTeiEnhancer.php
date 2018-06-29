@@ -101,29 +101,41 @@ class TeiEditionsTeiEnhancer
         $source = $this->tei->teiHeader->fileDesc->sourceDesc;
         $list = $source->$listTag ? $source->$listTag : $source->addChild($listTag);
 
-        $item = $list->addChild($itemTag);
-        $item->addChild($nameTag, htmlspecialchars($entity->name));
+        $name_text = htmlspecialchars($entity->name);
+        $item = null;
+        foreach ($list->children() as $child) {
+            if ($child->getName() == $itemTag && (string)$child->$nameTag == $name_text) {
+                $item = $child;
+            }
+        }
+        if (is_null($item)) {
+            $item = $list->addChild($itemTag);
+            $item->addChild($nameTag, $name_text);
+        }
 
         if ($entity->hasGeo()) {
-            $location = $item->addChild('location');
-            $location->addChild('geo', $entity->latitude . " " . $entity->longitude);
+            $item->location->geo = $entity->latitude . " " . $entity->longitude;
         }
         // Special case - if we have a local URL anchor, it refers to an xml:id
         // otherwise, add a link group.
         if ($entity->ref()[0] == '#') {
-            $item->addAttribute("xml:id", substr($entity->ref(), 1), "http://www.w3.org/XML/1998/namespace");
+            foreach ($item->xpath("./@xml:id") as $attr) {
+                unset($attr[0]);
+            }
+            $item["xml:id"] = substr($entity->ref(), 1);
         } else if (!empty($entity->urls)) {
-            $link_grp = $item->addChild('linkGrp');
+            unset($item->linkGrp);
+            $i = 0;
             foreach ($entity->urls as $type => $url) {
-                $link = $link_grp->addChild("link");
-                $link->addAttribute("type", $type);
-                $link->addAttribute("target", $url);
+                $item->linkGrp->link[$i]["type"] = $type;
+                $item->linkGrp->link[$i]["target"] = $url;
+                $i++;
             }
         }
         if (!empty($entity->notes)) {
-            $desc = $item->addChild("note");
-            foreach ($entity->notes as $p) {
-                $desc->addChild("p", htmlspecialchars($p));
+            unset($item->note);
+            for ($i = 0; $i < count($entity->notes); $i++) {
+                $item->note->p[$i] = htmlspecialchars($entity->notes[$i]);
             }
         }
     }
@@ -134,34 +146,42 @@ class TeiEditionsTeiEnhancer
      *  - term
      *  - persName
      *  - orgName
+     * @return int the number of refs added
      */
     public function addRefs()
     {
         // Index for generated entity IDs
         $idx = 0;
+        $added = 0;
 
         $placeRefs = $this->getReferences("placeName", $idx);
         foreach ($this->dataSrc->fetchPlaces($placeRefs) as $place) {
             error_log("Found place: " . $place->name);
             $this->addEntity("listPlace", "place", "placeName", $place);
+            $added++;
         }
 
         $termRefs = $this->getReferences("term", $idx);
         foreach ($this->dataSrc->fetchConcepts($termRefs) as $term) {
             error_log("Found term: " . $term->name);
             $this->addEntity("list", "item", "name", $term);
+            $added++;
         }
 
         $personRefs = $this->getReferences("persName", $idx);
         foreach ($this->dataSrc->fetchHistoricalAgents($personRefs) as $person) {
             error_log("Found person: " . $person->name);
             $this->addEntity( "listPerson", "person", "persName", $person);
+            $added++;
         }
 
         $orgRefs = $this->getReferences("orgName", $idx);
         foreach ($this->dataSrc->fetchHistoricalAgents($orgRefs) as $org) {
             error_log("Found org: " . $org->name);
             $this->addEntity("listOrg", "org", "orgName", $org);
+            $added++;
         }
+
+        return $added;
     }
 }
