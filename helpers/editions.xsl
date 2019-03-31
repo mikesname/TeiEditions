@@ -2,7 +2,6 @@
     <xsl:output indent="yes" omit-xml-declaration="yes" encoding="utf-8" method="xml" xalan:indent-amount="4"/>
 
     <xsl:param name="lang" select="'en'"/>
-    <xsl:param name="text-lang" select="'en'"/>
 
     <ehri:strings>
         <search xml:lang="en">Search in this edition</search>
@@ -30,7 +29,7 @@
     <xsl:variable name="messages" select="document('')/*/ehri:strings"/>
 
     <func:function name="ehri:text-dir">
-        <xsl:param name="text-lang"/>
+        <xsl:variable name="text-lang" select="./tei:TEI/tei:teiHeader/tei:profileDesc/tei:langUsage/tei:language/@ident"/>
 
         <func:result>
             <xsl:choose>
@@ -379,7 +378,7 @@
 
             <div class="tei-text">
                 <xsl:attribute name="dir">
-                    <xsl:value-of select="ehri:text-dir($text-lang)"/>
+                    <xsl:value-of select="ehri:text-dir()"/>
                 </xsl:attribute>
                 <!-- this comment prevents self-closing tags. -->
                 <xsl:comment>TEI Text</xsl:comment>
