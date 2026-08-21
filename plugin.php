@@ -37,6 +37,7 @@ require_once TEI_EDITIONS_DIR . '/forms/TeiEditions_Form_Enhance.php';
 require_once TEI_EDITIONS_DIR . '/forms/TeiEditions_Form_Import.php';
 require_once TEI_EDITIONS_DIR . '/forms/TeiEditions_Form_Update.php';
 
+require_once TEI_EDITIONS_DIR . '/helpers/TeiEditions_Helpers_Cache.php';
 require_once TEI_EDITIONS_DIR . '/helpers/TeiEditions_Helpers_Functions.php';
 require_once TEI_EDITIONS_DIR . '/helpers/TeiEditions_Helpers_View.php';
 require_once TEI_EDITIONS_DIR . '/helpers/TeiEditions_Helpers_DataImporter.php';
