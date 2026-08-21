@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/TeiEditions_Helpers_Cache.php';
 
 
 class ViewRenderer
@@ -233,17 +234,7 @@ function tei_editions_render_document_texts($item, &$meta, &$entities)
 
 function tei_editions_get_elements($element_name)
 {
-    $db = get_db();
-    return $db->query("SELECT DISTINCT text
-                      FROM {$db->prefix}element_texts t
-                      JOIN {$db->prefix}elements e
-                        ON t.element_id = e.id
-                      JOIN {$db->prefix}items i
-                        ON t.record_id = i.id
-                      WHERE i.public AND e.name  = ?
-                      ORDER BY text",
-        ["name" => $element_name]
-    )->fetchAll($style = 0, $col = 0);
+    return TeiEditions_Helpers_Cache::instance()->elementsByName($element_name);
 }
 
 /**
@@ -255,21 +246,7 @@ function tei_editions_get_elements($element_name)
  */
 function tei_editions_get_item_by_identifier($identifier)
 {
-    $element = get_db()->getTable('Element')->findBy([
-        'name' => 'Identifier'
-    ])[0]; // hack!
-    $text = get_db()->getTable('ElementText')->findBy([
-        'element_id' => $element->id,
-        'text' => $identifier
-    ]);
-    if (!empty($text)) {
-        $item = get_db()->getTable('Item')->find($text[0]->record_id);
-        if (!is_null($item) && $item !== false) {
-            return $item;
-        }
-    }
-
-    return null;
+    return TeiEditions_Helpers_Cache::instance()->itemByIdentifier($identifier);
 }
 
 
@@ -346,10 +323,14 @@ function tei_editions_render_map($data, $width = 425, $height = 350)
 
 function tei_editions_get_image_sizes($file)
 {
+    $info = [];
     if ($file->metadata != '') {
         $info = json_decode($file->metadata, true);
-        if (isset($info["video"]) and isset($info["video"]["resolution_x"])) {
+        if (is_array($info) && isset($info["video"]) and isset($info["video"]["resolution_x"])) {
             return $info["video"]["resolution_x"] . 'x' . $info["video"]["resolution_y"];
+        }
+        if (!is_array($info)) {
+            $info = [];
         }
     }
 
@@ -357,5 +338,22 @@ function tei_editions_get_image_sizes($file)
     // set for this file.
     error_log("No metadata for file: " . $file->original_filename);
     $size = getimagesize($file->getWebPath());
+    if ($size === false) {
+        return '0x0';
+    }
+
+    // Persist so this read isn't repeated on every future page view.
+    $info["video"] = [
+        "resolution_x" => $size[0],
+        "resolution_y" => $size[1]
+    ];
+    try {
+        $file->metadata = json_encode($info);
+        $file->save();
+    } catch (Exception $e) {
+        error_log("Unable to persist computed image size for file: "
+            . $file->original_filename . ": " . $e->getMessage());
+    }
+
     return $size[0] . 'x' . $size[1];
 }

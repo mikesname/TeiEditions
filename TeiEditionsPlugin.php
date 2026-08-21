@@ -67,7 +67,13 @@ class TeiEditionsPlugin extends Omeka_Plugin_AbstractPlugin
                     "xpaths" => [
                         "/tei:TEI/tei:teiHeader/tei:fileDesc/tei:sourceDesc/tei:listPlace/tei:place/tei:placeName"
                     ]
-                ]
+                ],
+	            "DOI" => [
+					"description" => "Digital Object Identifier",
+					"xpaths" => [
+						"/tei:TEI/tei:teiHeader/tei:fileDesc/tei:publicationStmt/tei:idno[@type='DOI']"
+					]
+	            ]
             ]
         ]
     ];
@@ -115,6 +121,14 @@ class TeiEditionsPlugin extends Omeka_Plugin_AbstractPlugin
      */
     private function createMapping($element_id, $xpath)
     {
+        $existing = get_db()->getTable('TeiEditionsFieldMapping')->findBy([
+            'element_id' => $element_id,
+            'path' => $xpath
+        ]);
+        if ($existing) {
+            return $existing[0];
+        }
+
         $mapping = new TeiEditionsFieldMapping;
         $mapping->path = $xpath;
         $mapping->element_id = $element_id;
@@ -293,6 +307,17 @@ SQL
      */
     public function hookUpgrade($args)
     {
+        // Not gated on $args['old_version']: this plugin's versions are all
+        // '1.0.0-preN', which version_compare() won't treat as pre-1.0.0.
+        // createItemTypeMappings() is idempotent, so just always run it.
+        $this->_db->getAdapter()->beginTransaction();
+        try {
+            $this->createItemTypeMappings(TeiEditionsPlugin::$ITEM_TYPE_MAPPINGS);
+            $this->_db->getAdapter()->commit();
+        } catch (Exception $e) {
+            $this->_db->getAdapter()->rollBack();
+            throw $e;
+        }
     }
 
     /**

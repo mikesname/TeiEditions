@@ -5,6 +5,8 @@
  * @copyright Copyright 2021 King's College London Department of Digital Humanities
  */
 
+require_once __DIR__ . '/TeiEditions_Helpers_Cache.php';
+
 /**
  * Miscellaneous TEI functions.
  *
@@ -153,65 +155,12 @@ function full_path_to($file)
  */
 function tei_editions_tei_to_html($path, $img_map, $text_lang = null, $meta = false, $entities = false)
 {
-
-    $html_lang = function_exists("get_html_lang")
-        ? get_html_lang()
-        : "en-GB";
-    $lang = explode('-', $html_lang)[0];
-    $text_lang = $text_lang === null ? $lang : $text_lang;
-    $tohtml = __DIR__ . '/editions.xsl';
-
-    $xsldoc = new DOMDocument();
-    $xsldoc->load($tohtml);
-    $xsldoc->documentURI = $tohtml;
-
-    $xmldoc = new DOMDocument();
-    $xmldoc->load($path);
-    $xmldoc->documentURI = $path;
-
-    // NB: Suppress annoying warnings here...
-    $xmldoc = tei_editions_replace_urls_xml($xmldoc, $img_map);
-
-    $proc = new XSLTProcessor;
-    $proc->setParameter('', "lang", $lang);
-    $proc->setParameter('', 'text-lang', $text_lang);
-    $proc->importStylesheet($xsldoc);
-
-    $data = [];
-
-    $data["html"] = $proc->transformToXml($xmldoc);
-
-    if ($entities) {
-        $proc->setParameter('', "entities", true);
-        $data["entities"] = $proc->transformToXml($xmldoc);
-    }
-    if ($meta) {
-        $proc->setParameter('', 'file-id', tei_editions_get_identifier(basename($path)));
-        $proc->setParameter('', 'meta', true);
-        $data["meta"] = $proc->transformToXml($xmldoc);
-    }
-    return $data;
+    return TeiEditions_Helpers_Cache::instance()->teiToHtml($path, $img_map, $text_lang, $meta, $entities);
 }
 
 function tei_editions_replace_urls_xml(DOMDocument $doc, $map)
 {
-    $filename = __DIR__ . '/replace-urls.xsl';
-    $xsldoc = new DOMDocument();
-    $xsldoc->load($filename);
-
-    foreach ($xsldoc->getElementsByTagName('url-lookup') as $elem) {
-        foreach ($map as $name => $path) {
-            $kv = $xsldoc->createElement('entry');
-            $kv->setAttribute('key', $name);
-            $kv->appendChild($xsldoc->createTextNode($path));
-            $elem->appendChild($kv);
-        }
-    }
-
-    $proc = new XSLTProcessor();
-    $proc->registerPHPFunctions('basename');
-    $proc->importStylesheet($xsldoc);
-    return $proc->transformToDoc($doc);
+    return TeiEditions_Helpers_Cache::instance()->replaceUrlsXml($doc, $map);
 }
 
 function tei_editions_check_xpath_is_valid($path)
